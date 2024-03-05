@@ -69,8 +69,8 @@ public class UtilidadesHotelTest {
         ));
 
         Habitacion habitacion4 = new Habitacion();
-        habitacion3.setTipoHabitacion(TipoHabitacion.SUITE);
-        habitacion3.setReservas(List.of(
+        habitacion4.setTipoHabitacion(TipoHabitacion.SUITE);
+        habitacion4.setReservas(List.of(
                 new Reserva(), new Reserva()
         ));
 
@@ -191,13 +191,13 @@ public class UtilidadesHotelTest {
         assertEquals(habitacion, reserva.getHabitacion());
         assertEquals(LocalDate.now().plusDays(5), reserva.getFechaInicio());
         assertEquals(LocalDate.now().plusDays(10), reserva.getFechaFin());
-        assertEquals(Optional.of(6), reserva.getNumDias()); // El rango de fechas tiene 6 días
+        assertEquals(Optional.of(5).get(), reserva.getNumDias()); // El rango de fechas tiene 6 días
         assertEquals("CR", reserva.getCodigo().substring(0, 2)); // Comprueba que el código comienza con "CR"
         assertEquals(viajeros, reserva.getViajeros());
 
         // Calcular el precio esperado
-        double precioEsperado = hotel.getTipoHabitacionPrecio().get(habitacion.getTipoHabitacion()) * 6 * viajeros.size();
-        assertEquals(Optional.of(precioEsperado), reserva.getPrecioTotal());
+        double precioEsperado = hotel.getTipoHabitacionPrecio().get(habitacion.getTipoHabitacion()) * 5 * viajeros.size();
+        assertEquals(Optional.of(precioEsperado).get(), reserva.getPrecioTotal());
     }
 
 

@@ -9,6 +9,7 @@ import modelos.Reserva;
 import modelos.Viajero;
 
 import java.time.LocalDate;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,7 +27,26 @@ public class UtilidadesHotel {
      * @return
      */
     public static List<Hotel> getConAlMenos3Servicios(List<Hotel> hoteles, List<ServicioHotel> serviciosRequeridos){
-        return new ArrayList<>();
+
+        List<Hotel> hotelesFiltrados = new ArrayList<>();
+
+        for(Hotel h: hoteles){
+
+            //RETAINALL
+
+            //Sacar los servicios que tiene el hotel
+            List<ServicioHotel> serviciosHotel = new ArrayList<>(h.getServicios());
+
+            //Nos quedamos con todos los servicios coincidentes
+            serviciosHotel.retainAll(serviciosRequeridos);
+
+            if(serviciosHotel.size() >=3){
+                hotelesFiltrados.add(h);
+            }
+        }
+
+
+        return hotelesFiltrados;
     }
 
 
@@ -38,8 +58,44 @@ public class UtilidadesHotel {
      * @return
      */
     public static Map<TipoHabitacion,Integer> getNumReservasPorTipoHabitacion(List<Habitacion> habitaciones){
-        return new HashMap<>();
+
+        Map<TipoHabitacion, Integer> mapa = new HashMap<>();
+
+        for(Habitacion hab : habitaciones){
+
+            if(mapa.containsKey(hab.getTipoHabitacion())){
+                mapa.put(hab.getTipoHabitacion(), mapa.get(hab.getTipoHabitacion()) + hab.getReservas().size());
+            }else{
+                mapa.put(hab.getTipoHabitacion(),  hab.getReservas().size());
+            }
+        }
+        return mapa;
     }
+
+
+    private static  FranjaEdad obtenerFranjaEdadPorAnyo(LocalDate fechaNacimiento){
+
+        Integer anyos = Period.between(fechaNacimiento, LocalDate.now()).getYears();
+        FranjaEdad franjaEdad;
+
+        if(anyos < 6){
+            franjaEdad = FranjaEdad.BABY;
+        }else if( anyos < 13 ){
+            franjaEdad = FranjaEdad.INFANTIL;
+        }else if( anyos < 18 ){
+            franjaEdad = FranjaEdad.JUVENIL;
+        }else if( anyos < 71 ){
+            franjaEdad = FranjaEdad.ADULTO;
+        }else{
+            franjaEdad = FranjaEdad.ANCIANO;
+        }
+
+        return  franjaEdad;
+    }
+
+
+
+
 
 
     /**
@@ -57,8 +113,35 @@ public class UtilidadesHotel {
      * @return
      */
     public static Map<FranjaEdad,Integer> getNumViajerosPorFranjaEdad(List<Viajero> viajeros){
-        return new HashMap<>();
+
+        Map<FranjaEdad,Integer> mapaFinal = new HashMap<>();
+
+        for(Viajero v: viajeros){
+
+            //Franja Edad
+            FranjaEdad franjaEdad = obtenerFranjaEdadPorAnyo(v.getFechaNacimiento());
+
+            //Mapa
+            if(mapaFinal.containsKey(franjaEdad)){
+                mapaFinal.put(franjaEdad, mapaFinal.get(franjaEdad) +1);
+            }else{
+                mapaFinal.put(franjaEdad, 1);
+            }
+
+        }
+
+        return mapaFinal;
     }
+
+
+
+
+    private static  boolean isBetween(LocalDate fechaReferencia, LocalDate fecha1 , LocalDate fecha2){
+        return fechaReferencia.isAfter(fecha1) && fechaReferencia.isBefore(fecha2);
+    }
+
+
+
 
 
     /**
@@ -72,7 +155,27 @@ public class UtilidadesHotel {
      * @return
      */
     public static boolean habitacionDisponibleFechas(LocalDate fechaInicio , LocalDate fechaFin, Habitacion habitacion){
-        return false;
+
+        for(Reserva r : habitacion.getReservas()){
+
+
+            if(     (r.getFechaInicio().isBefore(fechaInicio) && isBetween(r.getFechaFin(), fechaInicio,fechaFin) )
+                    ||
+                    ( isBetween(r.getFechaInicio(), fechaInicio, fechaFin) &&   isBetween(r.getFechaFin(), fechaInicio, fechaFin))
+                    ||
+                    (isBetween(r.getFechaInicio(), fechaInicio, fechaFin) && r.getFechaFin().isAfter(fechaFin))
+                    ||
+                    (r.getFechaInicio().isBefore(fechaInicio) && r.getFechaFin().isAfter(fechaFin))
+            ){
+
+                return false;
+
+            }
+
+
+        }
+
+        return true;
     }
 
 
@@ -97,7 +200,22 @@ public class UtilidadesHotel {
      */
     public static Reserva realizarReserva(Hotel hotel, Habitacion habitacion,
                                           LocalDate fechaInicio, LocalDate fechaFin, List<Viajero> viajeros){
-        return null;
+
+        Reserva reserva = new Reserva();
+
+        //RELLENAR CAMPOS POR DEFECTO
+        reserva.setHotel(hotel);
+        reserva.setHabitacion(habitacion);
+        reserva.setFechaInicio(fechaInicio);
+        reserva.setFechaFin(fechaFin);
+        reserva.setViajeros(viajeros);
+
+        //CALCULADOS
+        reserva.setCodigo("CR"+ reserva.hashCode());
+        reserva.setNumDias(Period.between(fechaInicio,fechaFin).getDays());
+        reserva.setPrecioTotal( reserva.getNumDias() * reserva.getViajeros().size() * hotel.getTipoHabitacionPrecio().get(habitacion.getTipoHabitacion()) );
+
+        return reserva;
     }
 
 
@@ -112,7 +230,26 @@ public class UtilidadesHotel {
      * @return
      */
     public static boolean reservasCorrectas(List<Reserva> reservas){
-        return false;
+
+
+        for(Reserva r: reservas){
+
+            //Precio Objetivo / Ideal
+            Double precioIdeal = r.getNumDias() * r.getViajeros().size() * r.getHotel().getTipoHabitacionPrecio().get(r.getHabitacion().getTipoHabitacion());
+            Double precioReal = r.getPrecioTotal();
+
+            //Numero de Huéspedes
+            Integer numHuespedesMaximo = r.getHotel().getTipoHabitacionNumPersonas().get(r.getHabitacion().getTipoHabitacion());
+            Integer numReal = r.getViajeros().size();
+
+
+            if( (! precioIdeal.equals(precioReal))  || numReal> numHuespedesMaximo){
+                return false;
+            }
+
+
+        }
+        return true;
     }
 
 
