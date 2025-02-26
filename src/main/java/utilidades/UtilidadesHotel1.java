@@ -31,13 +31,6 @@ public class UtilidadesHotel1 {
 
         List<Hotel> hotelesFiltro = new ArrayList<>();
 
-        hoteles.forEach(h->{
-            List<ServicioHotel> coindicendes = new ArrayList<>(h.getServicios());
-            coindicendes.retainAll(serviciosRequeridos);
-            if(coindicendes.size() >=3){
-                hotelesFiltro.add(h);
-            }
-        });
 
         return hotelesFiltro;
     }
@@ -51,9 +44,7 @@ public class UtilidadesHotel1 {
      * @return
      */
     public static Map<TipoHabitacion,Integer> getNumReservasPorTipoHabitacion(List<Habitacion> habitaciones){
-        return habitaciones
-                .stream()
-                .collect(Collectors.groupingBy(Habitacion::getTipoHabitacion, Collectors.summingInt(h->h.getReservas().size())));
+       return new HashMap<>();
     }
 
 
@@ -75,26 +66,13 @@ public class UtilidadesHotel1 {
 
         Map<FranjaEdad, Integer> mapaFinal = new HashMap<>();
 
-        for(Viajero v : viajeros){
-
-            int edadViajero = Period.between(v.getFechaNacimiento(),LocalDate.now()).getYears();
-            FranjaEdad franjaEdad = edadViajero<6? FranjaEdad.BABY : edadViajero<13?  FranjaEdad.INFANTIL: edadViajero <18? FranjaEdad.JUVENIL: edadViajero<71? FranjaEdad.ADULTO: FranjaEdad.ANCIANO;
-
-            if(mapaFinal.containsKey(franjaEdad)){
-                mapaFinal.put(franjaEdad, mapaFinal.get(franjaEdad)+1);
-            }else{
-                mapaFinal.put(franjaEdad, 1);
-            }
-        }
-
-
         return mapaFinal;
     }
 
 
     private static boolean isBetween(LocalDate fecha1 , LocalDate fechaBetween , LocalDate fecha2){
 
-        return fechaBetween.isAfter(fecha1) && fechaBetween.isBefore(fecha2);
+        return false;
     }
 
 
@@ -110,18 +88,7 @@ public class UtilidadesHotel1 {
      */
     public static boolean habitacionDisponibleFechas(LocalDate fechaInicio , LocalDate fechaFin, Habitacion habitacion){
 
-
-        for(Reserva r : habitacion.getReservas()){
-
-            if((r.getFechaInicio().isBefore(fechaInicio) && isBetween(fechaInicio, r.getFechaFin(), fechaFin))
-                    || (isBetween(fechaInicio, r.getFechaInicio(), fechaFin) && isBetween(fechaInicio, r.getFechaFin(), fechaFin))
-                    || (isBetween(fechaInicio, r.getFechaInicio(), fechaFin) && r.getFechaFin().isAfter(fechaFin))
-                    || r.getFechaInicio().isBefore(fechaInicio) && r.getFechaFin().isAfter(fechaFin)){
-
-                return false;
-            }
-        }
-        return true;
+        return false;
     }
 
 
@@ -147,16 +114,7 @@ public class UtilidadesHotel1 {
     public static Reserva realizarReserva(Hotel hotel, Habitacion habitacion,
                                           LocalDate fechaInicio, LocalDate fechaFin, List<Viajero> viajeros){
 
-        Reserva r = new Reserva();
-        r.setHotel(hotel);
-        r.setHabitacion(habitacion);
-        r.setViajeros(viajeros);
-        r.setFechaInicio(fechaInicio);
-        r.setFechaFin(fechaFin);
-        r.setCodigo("CR"+ r.hashCode());
-        r.setNumDias(Period.between(fechaInicio,fechaFin).getDays());
-        r.setPrecioTotal(hotel.getTipoHabitacionPrecio().get(habitacion.getTipoHabitacion())*r.getNumDias()* viajeros.size());
-        return r;
+      return null;
     }
 
 
@@ -172,10 +130,7 @@ public class UtilidadesHotel1 {
      */
     public static boolean reservasCorrectas(List<Reserva> reservas){
 
-        return reservas.stream().noneMatch(
-                r-> !r.getPrecioTotal().equals(r.getViajeros().size()* r.getNumDias()* r.getHotel().getTipoHabitacionPrecio().get(r.getHabitacion().getTipoHabitacion()))
-                || (r.getViajeros().size() > r.getHotel().getTipoHabitacionNumPersonas().get(r.getHabitacion().getTipoHabitacion()))
-        );
+         return false;
     }
 
 
